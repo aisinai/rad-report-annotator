@@ -336,7 +336,7 @@ def train_d2v(unlabeled_docs, labeled_docs, D2V_EPOCH, DIM_DOC2VEC, W2V_DM, W2V_
 	d2vmodel.train(unlabeled_docs, total_words=total_unlabeled_words, epochs=D2V_EPOCH)
 	return d2vmodel
 
-def calc_auc(predictor_matrix,eligible_outcomes_aligned, all_outcomes_aligned,N_LABELS, pred_type, header,ASSIGNFOLD_USING_UNID=False):
+def calc_auc(predictor_matrix,eligible_outcomes_aligned, all_outcomes_aligned,N_LABELS, pred_type, header,ASSIGNFOLD_USING_ROW=False):
 	"""
 	Train Lasso models using 60% of labeled data with generated features and labels; calculate AUC, accuracy, 
 	confusion matrix for each label on remaining 40% of labeled data.
@@ -350,9 +350,9 @@ def calc_auc(predictor_matrix,eligible_outcomes_aligned, all_outcomes_aligned,N_
 		pred_type: label indicating what variables went into predictor_matrix
 		results_dir: directory to which to save results
 		header: header for predictor matrix
-		ASSIGNFOLD_USING_UNID: normally 60/40 split done randomly, you can fix it to unid (accession id) if you need replicability 
-							   but be wary of introducing distortion into train/test set with dates, etc.: recommend mapping existing
-							   original accession ids to your own randomly-generated IDs in excel files if you opt for this.
+		ASSIGNFOLD_USING_ROW: normally 60/40 split done randomly, you can fix it to use first 60% of rows if you need replicability 
+							   but be wary of introducing distortion into train/test set with dates, etc.: recommend randomly sorting
+							   rows in excel beforehand if you opt for this.
 
 	Returns:
 
@@ -371,7 +371,7 @@ def calc_auc(predictor_matrix,eligible_outcomes_aligned, all_outcomes_aligned,N_
 	r = list(range(eligible_outcomes_aligned.shape[0]))
 	random.shuffle(r)
 	
-	if(ASSIGNFOLD_USING_UNID):
+	if(ASSIGNFOLD_USING_ROW):
 		assignfold = pd.DataFrame(data=list(range(eligible_outcomes_aligned.shape[0])), columns=['train'])
 	else:
 		assignfold = pd.DataFrame(data=r, columns=['train'])
@@ -875,7 +875,7 @@ class RadReportAnnotator(object):
 		self.W2V_WINDOW = 5 #we can try 3,5,7
 		self.data_dir = report_dir_path #"Base directory for raw reports
 		self.validation_file =  validation_file_path #"File containing report annotations")
-		self.ASSIGNFOLD_USING_UNID=False # normally in lasso regression modeling 60% train / 40% test splits are done randomly. you can do them by unid / accession id if you need consistency across runs
+		self.ASSIGNFOLD_USING_ROW=False # normally in lasso regression modeling 60% train / 40% test splits are done randomly. you can do them by row if you need consistency across runs
 
 
 		#MENTIONING CLASS OBJECTS USED INTERNALLY LATER
@@ -1064,7 +1064,7 @@ class RadReportAnnotator(object):
 		print("dimensionality of predictor matrix:"+str(self.combined.shape))
 
 		#run lasso regressions
-		self.lasso_models, self.accuracy = calc_auc(self.combined,self.eligible_outcomes_aligned,self.all_outcomes_aligned,  self.N_LABELS, pred_type, self.headers,self.ASSIGNFOLD_USING_UNID)
+		self.lasso_models, self.accuracy = calc_auc(self.combined,self.eligible_outcomes_aligned,self.all_outcomes_aligned,  self.N_LABELS, pred_type, self.headers,self.ASSIGNFOLD_USING_ROW)
 
 		#infer labels	
 		self.inferred_binary_labels, self.inferred_proba_labels = write_silver_standard_labels(self.corpus,
