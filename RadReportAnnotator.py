@@ -394,7 +394,7 @@ def calc_auc(predictor_matrix,eligible_outcomes_aligned, all_outcomes_aligned,N_
 		#need to make sure we don't have an invalid setting -- ie, a train[x] set of labels that is uniform, else Lasso regression fails
 		if(len(set(eligible_outcomes_aligned.ix[train,i].tolist())))==1:
 			PROCEED=False;
-			raise ValueError ("fed label to lasso regression with no variation - cannot compute - investigate")
+			raise ValueError ("fed label to lasso regression with no variation - cannot compute - please investigate data")
  
 		if(PROCEED):
 			
@@ -403,14 +403,14 @@ def calc_auc(predictor_matrix,eligible_outcomes_aligned, all_outcomes_aligned,N_
 					parameters = { "penalty": ['l1'], 
 								   "C": [64,32,16,8,4,2,1,0.5,0.25,0.1,0.05,0.025,0.01,0.005]
 								 }
-					
-					cv = StratifiedKFold(n_splits=5)
-					grid_search = GridSearchCV(LogisticRegression(), param_grid=parameters, scoring='neg_log_loss', cv=cv)
-					grid_search.fit(predictor_matrix[train,:],np.array(eligible_outcomes_aligned.ix[train,i]))				
-					best_parameters0 = grid_search.best_estimator_.get_params()
-					
-					model0 = LogisticRegression(**best_parameters0)					
-
+					try:
+						cv = StratifiedKFold(n_splits=5)
+						grid_search = GridSearchCV(LogisticRegression(), param_grid=parameters, scoring='neg_log_loss', cv=cv)
+						grid_search.fit(predictor_matrix[train,:],np.array(eligible_outcomes_aligned.ix[train,i]))				
+						best_parameters0 = grid_search.best_estimator_.get_params()
+						model0 = LogisticRegression(**best_parameters0)					
+					except:
+						raise ValueError ("error in lasso regression - likely data issue, may involve rare labels - please investigate data")                        
 				model0.fit(predictor_matrix[np.array(train),:],eligible_outcomes_aligned.ix[train,i])
 				pred0=model0.predict_proba(predictor_matrix[np.array(test),:])[:,1]
 				coef = pd.concat([ pd.DataFrame(header),pd.DataFrame(np.transpose(model0.coef_))], axis = 1)	
@@ -451,9 +451,12 @@ def calc_auc(predictor_matrix,eligible_outcomes_aligned, all_outcomes_aligned,N_
 				confusion.iloc[resultrow,5]=FN
 
 				#let's rebuild model using all data before we save it to use for prediction;
-				model0 = LogisticRegression(**best_parameters0)	
-				model0.fit(predictor_matrix,eligible_outcomes_aligned.ix[:,i])
-				lasso_models[i]=model0
+				try:
+					model0 = LogisticRegression(**best_parameters0)	
+					model0.fit(predictor_matrix,eligible_outcomes_aligned.ix[:,i])                
+					lasso_models[i]=model0
+				except:
+					raise ValueError ("error in lasso regression - likely data issue, may involve rare labels - please investigate data")                        
 
 				resultrow+=1
 		
@@ -1086,9 +1089,7 @@ class RadReportAnnotator(object):
 		return self.inferred_binary_labels, self.inferred_proba_labels
 	
 if __name__ == "__main__":
-	
-	CTHAnnotator = RadReportAnnotator(report_dir_path="C:\\Users\\jrzec\\Desktop\\clean_nlp_code\\pseudodata\\reports",
-									  validation_file_path="C:\\Users\\jrzec\\Desktop\\clean_nlp_code\\pseudodata\\labels\\labeled_reports.xlsx")
+	CTHAnnotator = RadReportAnnotator(report_dir_path=os.path.join("pseudodata","reports"), validation_file_path=os.path.join("pseudodata","labels","labeled_reports.xlsx"))
 
 	#set arguments here - examples 
 	CTHAnnotator.define_config(DO_BOW=True,
