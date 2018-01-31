@@ -1,0 +1,10 @@
+name: rad_env
+dependencies:
+  - python=3.6
+  - pandas
+  - numpy
+  - tqdm
+  - scikit-learn
+  - nltk
+  - gensim
+  - ipykernel
