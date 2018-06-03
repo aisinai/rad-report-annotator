@@ -15,4 +15,5 @@ To configure your own local instance (assumes [Anaconda is installed](https://ww
 git clone https://www.github.com/aisinai/rad-report-annotator.git
 cd rad-report-annotator
 conda env create -f environment.yml
+source activate rad_env
 ```
