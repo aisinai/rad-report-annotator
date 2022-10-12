@@ -18,3 +18,5 @@ conda env create -f environment.yml
 source activate rad_env
 python -m ipykernel install --user --name rad_env --display-name "Python (rad_env)"
 ```
+
+*Note as of Oct 11, 2022: this conda environment builds on Linux and Windows, but not on Mac as older versions of gensim for Mac are not available in conda-forge.* 
