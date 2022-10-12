@@ -16,4 +16,5 @@ git clone https://www.github.com/aisinai/rad-report-annotator.git
 cd rad-report-annotator
 conda env create -f environment.yml
 source activate rad_env
+python -m ipykernel install --user --name rad_env --display-name "Python (rad_env)"
 ```
